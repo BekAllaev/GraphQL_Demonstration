@@ -8,6 +8,11 @@
 
 	<ItemGroup>
 		<PackageReference Include="Bogus" Version="35.6.3" />
+		<PackageReference Include="GraphQL" Version="8.5.0" />
+		<PackageReference Include="GraphQL.MicrosoftDI" Version="8.5.0" />
+		<PackageReference Include="GraphQL.Server.Transports.AspNetCore" Version="8.2.0" />
+		<PackageReference Include="GraphQL.Server.Ui.GraphiQL" Version="8.2.0" />
+		<PackageReference Include="GraphQL.Server.Ui.Playground" Version="8.2.0" />
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.3" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.4" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">

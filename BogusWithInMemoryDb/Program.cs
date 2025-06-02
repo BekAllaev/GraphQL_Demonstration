@@ -1,6 +1,10 @@
 using Bogus;
 using BogusWithInMemoryDb.Data;
+using BogusWithInMemoryDb.DemoSchema;
 using BogusWithInMemoryDb.Model;
+using BogusWithInMemoryDb.Queries;
+using GraphQL;
+using GraphQL.Types;
 using Microsoft.EntityFrameworkCore;
 
 namespace BogusWithInMemoryDb
@@ -21,6 +25,12 @@ namespace BogusWithInMemoryDb
 
             builder.Services.AddDbContext<AppDbContext>(options => 
                 options.UseSqlite(builder.Configuration.GetConnectionString(InMemoryDbConnectionStringName)));
+
+            builder.Services.AddTransient<DemoSchema.DemoSchema>();
+            builder.Services.AddGraphQL(x => x.AddGraphTypes().AddAutoSchema<CategoryQuery>().AddSystemTextJson().AddErrorInfoProvider(opt =>
+            {
+                opt.ExposeExceptionDetails = true;
+            }));
 
             var app = builder.Build();
 
@@ -44,6 +54,9 @@ namespace BogusWithInMemoryDb
 
 
             app.MapControllers();
+
+            app.UseGraphQL<DemoSchema.DemoSchema>();
+            app.UseGraphQLGraphiQL(options: new GraphQL.Server.Ui.GraphiQL.GraphiQLOptions());
 
             app.Run();
         }
