@@ -1,11 +1,11 @@
 ﻿using BogusWithInMemoryDb.Queries;
 using GraphQL.Types;
 
-namespace BogusWithInMemoryDb.DemoSchema
+namespace BogusWithInMemoryDb.Schemas
 {
-    public class DemoSchema : Schema
+    public class CategorySchema : Schema
     {
-        public DemoSchema(IServiceProvider serviceProvider)
+        public CategorySchema(IServiceProvider serviceProvider)
             :base(serviceProvider)
         {
             Query = serviceProvider.GetRequiredService<CategoryQuery>();
