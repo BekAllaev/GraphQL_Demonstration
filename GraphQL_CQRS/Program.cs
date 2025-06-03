@@ -5,6 +5,7 @@ using BogusWithInMemoryDb.Queries;
 using BogusWithInMemoryDb.Schemas;
 using GraphQL;
 using GraphQL.Types;
+using GraphQL_CQRS.Model;
 using Microsoft.EntityFrameworkCore;
 
 namespace BogusWithInMemoryDb
@@ -23,7 +24,7 @@ namespace BogusWithInMemoryDb
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
 
-            builder.Services.AddDbContext<AppDbContext>(options => 
+            builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlite(builder.Configuration.GetConnectionString(InMemoryDbConnectionStringName)));
 
             builder.Services.AddTransient<CategorySchema>();
@@ -63,41 +64,80 @@ namespace BogusWithInMemoryDb
 
         static void SeedData(AppDbContext context)
         {
-            // Create a Faker for the Category model.
-            var categoryFaker = new Faker<Category>()
-                .RuleFor(c => c.Id, f => f.IndexFaker + 1) // Auto-increment Id starting at 1
-                .RuleFor(c => c.Name, f => f.Commerce.Department())
-                .RuleFor(c => c.Description, f => f.Lorem.Sentence());
+            // ===== CATEGORIES =====
+            var categoryId = 1;
+            var categories = new Faker<Category>("en")
+                .RuleFor(c => c.Id, _ => categoryId++)
+                .RuleFor(c => c.Name, f => f.Commerce.Categories(1)[0])
+                .RuleFor(c => c.Description, f => f.Lorem.Sentence())
+                .Generate(10);
 
-            int productIdCounter = 1;
-
-            // Create a Faker for the Product model.
-            // Notice that the CategoryId will be assigned later for each product.
-            var productFaker = new Faker<Product>()
-                .RuleFor(p => p.Id, _ => productIdCounter++) // Auto-increment Id starting at 1
+            // ===== PRODUCTS =====
+            var productId = 1;
+            var products = new Faker<Product>("en")
+                .RuleFor(p => p.Id, _ => productId++)
                 .RuleFor(p => p.Name, f => f.Commerce.ProductName())
-                .RuleFor(p => p.UnitPrice, f => Convert.ToDouble(f.Commerce.Price()));
+                .RuleFor(p => p.UnitPrice, f => double.Parse(f.Commerce.Price(5, 300)))
+                .RuleFor(p => p.CategoryId, f => f.PickRandom(categories).Id)
+                .Generate(50);
 
-            // Generate 5 categories.
-            var categories = categoryFaker.Generate(5);
-            var allProducts = new List<Product>();
+            // ===== EMPLOYEES =====
+            var employeeId = 1;
+            var employees = new Faker<Employee>("en")
+                .RuleFor(e => e.EmployeeId, _ => employeeId++)
+                .RuleFor(e => e.FirstName, f => f.Name.FirstName())
+                .RuleFor(e => e.LastName, f => f.Name.LastName())
+                .Generate(20);
 
-            // For each category, generate between 1 to 10 products.
-            foreach (var category in categories)
-            {
-                int productCount = new Faker().Random.Int(1, 10);
-                // Clone the productFaker to assign CategoryId specifically for this category.
-                var productsForCategory = productFaker.Clone()
-                    .RuleFor(p => p.CategoryId, f => category.Id)
-                    .Generate(productCount);
+            // ===== CUSTOMERS =====
+            var customerId = 1;
+            var customers = new Faker<Customer>("en")
+                .RuleFor(c => c.CustomerId, _ => customerId++)
+                .RuleFor(c => c.Country, f => f.Address.Country())
+                .RuleFor(c => c.CompanyName, f => f.Company.CompanyName())
+                .Generate(100);
 
-                allProducts.AddRange(productsForCategory);
-            }
+            // ===== ORDERS + ORDERDETAILS =====
+            var orderId = 1;
+            var orders = new List<Order>();
+            var orderDetails = new List<OrderDetail>();
 
-            // Add to the context and save changes.
-            context.Categories.AddRange(categories);
-            context.Products.AddRange(allProducts);
+            var orderFaker = new Faker<Order>("en")
+                .RuleFor(o => o.OrderId, _ => orderId++)
+                .RuleFor(o => o.OrderDate, f => f.Date.Recent(90))
+                .RuleFor(o => o.CustomerId, f => f.PickRandom(customers).CustomerId)
+                .RuleFor(o => o.EmployeeId, f => f.PickRandom(employees).EmployeeId)
+                .FinishWith((f, o) =>
+                {
+                    var lines = f.Random.Int(1, 5);
+                    foreach (var prod in f.PickRandom(products, lines))
+                    {
+                        orderDetails.Add(new OrderDetail
+                        {
+                            OrderId = o.OrderId,
+                            ProductId = prod.Id,
+                            Quantity = f.Random.Short(1, 10),
+                            UnitPrice = prod.UnitPrice
+                        });
+                    }
+                });
+
+            orders = orderFaker.Generate(400);
+
+            // ===== SAVE =====
+            context.AddRange(categories);
+            context.AddRange(products);
+            context.AddRange(employees);
+            context.AddRange(customers);
+            context.AddRange(orders);
+            context.AddRange(orderDetails);
+
             context.SaveChanges();
+        }
+
+        private static double a(Faker faker, Product product)
+        {
+            throw new NotImplementedException();
         }
     }
 }

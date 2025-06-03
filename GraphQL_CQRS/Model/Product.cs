@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using GraphQL_CQRS.Model;
+using System.Text.Json.Serialization;
 
 namespace BogusWithInMemoryDb.Model
 {
@@ -14,5 +15,7 @@ namespace BogusWithInMemoryDb.Model
 
         [JsonIgnore]
         public Category? Category { get; set; }
+
+        public virtual ICollection<OrderDetail> OrderDetails { get; set; }
     }
 }
