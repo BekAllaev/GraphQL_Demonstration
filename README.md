@@ -9,7 +9,7 @@ This repo is based on next links:
 In this repo I introduce concept - `StatisticalObject`.
 
 
-The idea of this concept was influinced by the `GraphQL`. `GraphQL` make it easier for you to work with large objects that can be increased in the feature in the several ways, for example: 
+The idea of this concept was influinced by the `GraphQL`. `GraphQL` make it easier for you to work with large objects that can be increased in the future in the several ways, for example: 
 - *from data consumer perspective* it is easier to work with big object, you can choose what fields you need exactly for your need, so you don't pull whole object
 - on the other side is the *one who prepares the data*, from his/hers perspective it is easier to use `GraphQL` so he/she can manipulate the type and he/she does not need to 
 write new endpoint or create new type that will defer from the previous one just by one field. He/she may want to do it because some data consumer doesn't want to have this "new" field
