@@ -11,8 +11,6 @@ In this article I have combined my knowledge of CQRS pattern and GraphQL. I used
   
 But GraphQL made me re-think this approach so that is why the name of the repo is ***GrahpQL_CQRS***. More details please read in the next section - ***Description***
 
-> In my honest opinion, I don't think that GraphQL + CRUD is the good demonstration of GraphQL. I think `CQRS` and `GraphQL` complete each other so I think that this combination is more interesting than ***GraphQL*** + ***CRUD***. I will try to explain this in the rest part of README
-
 ## Description 
 In this repo I introduce concept - `StatisticalObject`.
 
