@@ -12,7 +12,7 @@ namespace BogusWithInMemoryDb.Types
             Field(x => x.Name).Description("Category's Name");
             Field(x => x.Description).Description("Category's Description");
 
-            Field<ListGraphType<ProductGraphType>>("products")
+            Field<ListGraphType<ProductReadGraphType>>("products")
                 .Description("Products in this category")
                 .Resolve(x => x.Source.Products);
         }

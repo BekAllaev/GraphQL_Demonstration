@@ -3,9 +3,9 @@ using GraphQL.Types;
 
 namespace BogusWithInMemoryDb.Types
 {
-    public class ProductGraphType : ObjectGraphType<Product>
+    public class ProductReadGraphType : ObjectGraphType<Product>
     {
-        public ProductGraphType()
+        public ProductReadGraphType()
         {
             Name = "Product";
 
