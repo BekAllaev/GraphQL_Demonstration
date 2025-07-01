@@ -2,10 +2,11 @@ using Bogus;
 using BogusWithInMemoryDb.Data;
 using BogusWithInMemoryDb.Model;
 using BogusWithInMemoryDb.Queries;
-using BogusWithInMemoryDb.Schemas;
 using GraphQL;
 using GraphQL.Types;
 using GraphQL_CQRS.Model;
+using GraphQL_CQRS.Mutations;
+using GraphQL_CQRS.Schemas;
 using Microsoft.EntityFrameworkCore;
 
 namespace BogusWithInMemoryDb
@@ -27,11 +28,16 @@ namespace BogusWithInMemoryDb
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlite(builder.Configuration.GetConnectionString(InMemoryDbConnectionStringName)));
 
-            builder.Services.AddTransient<CategorySchema>();
-            builder.Services.AddGraphQL(x => x.AddGraphTypes().AddAutoSchema<CategoryQuery>().AddSystemTextJson().AddErrorInfoProvider(opt =>
-            {
-                opt.ExposeExceptionDetails = true;
-            }));
+            builder.Services.AddTransient<CategoryQuery>();
+            builder.Services.AddTransient<ProductMutation>();
+            builder.Services.AddTransient<AppSchema>();
+            builder.Services.AddGraphQL(x => x.AddGraphTypes()
+                .AddGraphTypes(typeof(AppSchema).Assembly)
+                .AddSystemTextJson()
+                .AddErrorInfoProvider(opt =>
+                {
+                    opt.ExposeExceptionDetails = true;
+                }));
 
             var app = builder.Build();
 
@@ -56,7 +62,7 @@ namespace BogusWithInMemoryDb
 
             app.MapControllers();
 
-            app.UseGraphQL<CategorySchema>();
+            app.UseGraphQL<AppSchema>();
             app.UseGraphQLGraphiQL(options: new GraphQL.Server.Ui.GraphiQL.GraphiQLOptions());
 
             app.Run();
@@ -133,11 +139,6 @@ namespace BogusWithInMemoryDb
             context.AddRange(orderDetails);
 
             context.SaveChanges();
-        }
-
-        private static double a(Faker faker, Product product)
-        {
-            throw new NotImplementedException();
         }
     }
 }
