@@ -3,6 +3,7 @@
 This repo is based on next links:
 - GraphQL main page - https://graphql.org/
 - Mukesh Murugan's tutorial on how to implement `GraphQL` in .NET - https://codewithmukesh.com/blog/graphql-in-aspnet-core/
+- How to do mutations - https://graphql-dotnet.github.io/docs/getting-started/mutations/
 
 ## Why GraphQL + CQRS?
 In this article I have combined my knowledge of CQRS pattern and GraphQL. I used to create classes for every read operation, for example: 
