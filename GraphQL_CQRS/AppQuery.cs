@@ -2,6 +2,7 @@
 using BogusWithInMemoryDb.Model;
 using BogusWithInMemoryDb.StatisticalObjects;
 using BogusWithInMemoryDb.Types;
+using GraphQL;
 using GraphQL.Types;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,6 +23,16 @@ namespace GraphQL_CQRS
             Field<ListGraphType<CategoryStatisticalObjectGraphType>>("CategoryStatisticalObject")
                 .Description("List of category statistical objects")
                 .ResolveAsync(async _ => await GetStatisticalObjects(_context));
+
+            Field<CategoryGraphType>("CategoryById")
+                .Description("Returns category by id")
+                .Argument<IntGraphType>("id")
+                .ResolveAsync(async context =>
+                {
+                    var categoryId = context.GetArgument<int>("id");
+                    var category = await _context.Categories.FindAsync(categoryId);
+                    return category;
+                });
         }
 
         private async Task<List<CategoryStatisticalObject>> GetStatisticalObjects(AppDbContext context)

@@ -7,6 +7,8 @@ namespace GraphQL_CQRS
         public AppSchema(IServiceProvider serviceProvider)
             :base(serviceProvider)
         {
+            RegisterTypeMapping(typeof(int), typeof(IntGraphType));
+
             Query = serviceProvider.GetRequiredService<AppQuery>();
             Mutation = serviceProvider.GetRequiredService<AppMutation>();
         }
