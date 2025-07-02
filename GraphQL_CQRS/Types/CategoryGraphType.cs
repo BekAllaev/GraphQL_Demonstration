@@ -8,7 +8,7 @@ namespace BogusWithInMemoryDb.Types
         public CategoryGraphType() 
         { 
             Name = "Category";
-            Field(x => x.Id, type: typeof(IdGraphType)).Description("Category Id");
+            Field(x => x.Id, type: typeof(IntGraphType)).Description("Category Id");
             Field(x => x.Name).Description("Category's Name");
             Field(x => x.Description).Description("Category's Description");
 

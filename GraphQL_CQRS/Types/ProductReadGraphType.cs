@@ -9,7 +9,7 @@ namespace BogusWithInMemoryDb.Types
         {
             Name = "Product";
 
-            Field(x => x.Id, type: typeof(IdGraphType)).Description("Product Id");
+            Field(x => x.Id, type: typeof(IntGraphType)).Description("Product Id");
             Field(x => x.Name).Description("Product Name");
             Field(x => x.UnitPrice).Description("Product Price");
         }
