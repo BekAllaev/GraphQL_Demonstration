@@ -5,11 +5,11 @@ using GraphQL;
 using GraphQL.Types;
 using GraphQL_CQRS.Types;
 
-namespace GraphQL_CQRS.Mutations
+namespace GraphQL_CQRS
 {
-    public class ProductMutation : ObjectGraphType
+    public class AppMutation : ObjectGraphType
     {
-        public ProductMutation(AppDbContext dbContext)
+        public AppMutation(AppDbContext dbContext)
         {
             Field<ProductReadGraphType>("AddProduct")
                 .Argument<NonNullGraphType<ProductWriteGraphType>>("product")

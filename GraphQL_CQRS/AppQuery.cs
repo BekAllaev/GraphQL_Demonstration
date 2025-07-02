@@ -5,12 +5,12 @@ using BogusWithInMemoryDb.Types;
 using GraphQL.Types;
 using Microsoft.EntityFrameworkCore;
 
-namespace BogusWithInMemoryDb.Queries
+namespace GraphQL_CQRS
 {
-    public class CategoryQuery : ObjectGraphType
+    public class AppQuery : ObjectGraphType
     {
         private readonly AppDbContext _context;
-        public CategoryQuery(AppDbContext context)
+        public AppQuery(AppDbContext context)
         {
             _context = context;
             Name = "Query";

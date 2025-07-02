@@ -1,12 +1,10 @@
 using Bogus;
 using BogusWithInMemoryDb.Data;
 using BogusWithInMemoryDb.Model;
-using BogusWithInMemoryDb.Queries;
 using GraphQL;
 using GraphQL.Types;
+using GraphQL_CQRS;
 using GraphQL_CQRS.Model;
-using GraphQL_CQRS.Mutations;
-using GraphQL_CQRS.Schemas;
 using Microsoft.EntityFrameworkCore;
 
 namespace BogusWithInMemoryDb
@@ -28,8 +26,8 @@ namespace BogusWithInMemoryDb
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlite(builder.Configuration.GetConnectionString(InMemoryDbConnectionStringName)));
 
-            builder.Services.AddTransient<CategoryQuery>();
-            builder.Services.AddTransient<ProductMutation>();
+            builder.Services.AddTransient<AppQuery>();
+            builder.Services.AddTransient<AppMutation>();
             builder.Services.AddTransient<AppSchema>();
             builder.Services.AddGraphQL(x => x.AddGraphTypes()
                 .AddGraphTypes(typeof(AppSchema).Assembly)
