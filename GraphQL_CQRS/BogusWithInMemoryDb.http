@@ -1,6 +1,0 @@
-@BogusWithInMemoryDb_HostAddress = http://localhost:5003
-
-GET {{BogusWithInMemoryDb_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
