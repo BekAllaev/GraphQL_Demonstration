@@ -113,7 +113,7 @@ public class AppQuery : ObjectGraphType
     }
 }
 ```
-> Here we create one "endpoint" that returns list of category and return one category by ID
+> Here we create one "endpoint" that returns list of category and another "endpoint" return one category by ID
 
 4. We create only one class for write(mutations) operations - `AppMutation`
 ```
