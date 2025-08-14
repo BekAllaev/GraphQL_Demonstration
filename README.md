@@ -1,51 +1,218 @@
-# GraphQL and CQRS
+# Simple CRUD with GraphQL
 
-This repo is based on next links:
-- GraphQL main page - https://graphql.org/
-- Mukesh Murugan's tutorial on how to implement `GraphQL` in .NET - https://codewithmukesh.com/blog/graphql-in-aspnet-core/
-- How to do mutations - https://graphql-dotnet.github.io/docs/getting-started/mutations/
+Step by step guide how to make CRUD with GraphQL
 
-## How to run?
-Just download repo and hit F5, after app has started navigate to - https://localhost:7183/ui/graphiql
-
-## Why GraphQL + CQRS?
-In this article I have combined my knowledge of CQRS pattern and GraphQL. I used to create classes for every read operation, for example: 
-- I need to know how many products are in the category => I add class to read stack `ProductsAmountByCategory`
-- I need to know what is the overall price of category(sum of unit price of products in this category) => I add class to read stack `OverallSalesByCategory`
-  
-But GraphQL made me re-think this approach so that is why the name of the repo is ***GrahpQL_CQRS***. More details please read in the next section - ***Description***
-
-## Description 
-In this repo I introduce concept - `StatisticalObject`.
-
-`GraphQL` make it easier for you to work with large objects that can be increased in the future in the several ways, for example: 
-- *from data consumer perspective* it is easier to work with big object, you can choose what fields you need exactly for you, so you don't pull whole object
-- on the other side is the *one who prepares the data*, from his/hers perspective it is easier to use `GraphQL` so he/she can manipulate the type and he/she does not need to 
-write new endpoint or create new type that will defer from the previous one just by one field. He/she may want to do it because some data consumer doesn't want to have this "new" field
-but with `GraphQL` he/she just add the field and data consumer will decide whether he/she needs it or not
-
-So what is actually `StasticalObject`, before it were several statistical objects like:
-- CustomersByCountry - shows how many *customers* are in the **country**;
-- OrdersByCountry - shows how many *orders* are in the **country**;
-- SalesByCountry- shows how much *sales(incomer)* was completed in the **country**;
-
-Do you see it? Everything moves around **country**, so instead of having several types we have one type - `CountryStatisticalObject` that looks like this:
+1. Create `Category` and `Product` models
 ```
-public class CountryStatisticalObject
+public class Category
 {
-    public string CountryName { get; set; }
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string Description { get; set; }
+    public ICollection<Product> Products { get; set; }
+}
 
-    public int CustomersCount { get; set; }
-
-    public int OrdersCount { get; set; }
-
-    public double Sales { get; set; }
+public class Product
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public int CategoryId { get; set; }
+    public double UnitPrice { get; set; }
+    [JsonIgnore]
+    public Category? Category { get; set; }
+    public virtual ICollection<OrderDetail> OrderDetails { get; set; }
 }
 ```
 
-Where `CountryName` will be something like primary key and the fields below are statistics(or info) that is related to this country.
-If somebody wants to know `CustomersCount` he/she asks only for this and get only what he/she asks.
+2. Create `CategoryGraphType`(this is `GraphQl` wrapper), I don't mutate `Category` so it is okay to have one type, I will use it for read operation.
+```
+public class CategoryGraphType : ObjectGraphType<Category>
+{
+    public CategoryGraphType() 
+    { 
+        Name = "Category";
+        Field(x => x.Id, type: typeof(IntGraphType)).Description("Category Id");
+        Field(x => x.Name).Description("Category's Name");
+        Field(x => x.Description).Description("Category's Description");
+        Field<ListGraphType<ProductReadGraphType>>("products")
+            .Description("Products in this category")
+            .Resolve(x => x.Source.Products);
+    }
+}
+```
 
-Let's say tomorrow I find out that I need to have **average check** for country. No problem I add this field and that is it. 
+Wrapper for `Product` entity. 
+> Even though I don't do read operations with `Product`, `Product` is used in `Category` entity (Category has list of product). There we need to use GraphQl type which is `ProductReadGraphType`
+```
+public class ProductReadGraphType : ObjectGraphType<Product>
+{
+    public ProductReadGraphType()
+    {
+        Name = "Product";
+        Field(x => x.Id, type: typeof(IntGraphType)).Description("Product Id");
+        Field(x => x.Name).Description("Product Name");
+        Field(x => x.UnitPrice).Description("Product Price");
+    }
+}
+```
 
-The rest is GraphQL
+One wrapper for write operation
+```
+public class ProductCreateGraphType : InputObjectGraphType<Product>
+{
+    public ProductCreateGraphType()
+    {
+        Name = "ProductCreate";
+        Field(x => x.Name).Description("Product Name");
+        Field(x => x.UnitPrice).Description("Product Price");
+        Field(x => x.CategoryId).Description("Category id");
+    }
+}
+```
+
+One wrapper for update operation
+```
+public class ProductUpdateGraphType : InputObjectGraphType<Product>
+{
+    public ProductUpdateGraphType()
+    {
+        Name = "ProductUpdate";
+        Field(x => x.Id, type: typeof(IntGraphType)).Description("Product Id");
+        Field("Name", typeof(StringGraphType)).Description("Product Name");
+        Field("UnitPrice", typeof(FloatGraphType)).Description("Product Price");
+        Field("CategoryId", typeof(IntGraphType)).Description("Category id");                
+    }
+}
+```
+> The difference between `ProductUpdateGraphType` and `ProdcutCreateGraphType` is that `ProductUpdateGraphType` allow me to leave some of the field empty when I update product. This is possible because I don't use lambda functions. When you use lambda function, field will behave the same way as property of the entity. That means if some field is nullable, in GraphQl wrapper field also will be nullable. 
+
+3. Then we create only one class that will keep all read(or queries) operations - `AppQuery`
+```
+public class AppQuery : ObjectGraphType
+{
+    private readonly AppDbContext _context;
+
+    public AppQuery(AppDbContext context)
+    {
+        _context = context;
+        Name = "Query";
+
+        Field<ListGraphType<CategoryGraphType>>("Categories")
+            .Description("List of categories")
+            .Resolve(_ => _context.Categories.Include(x => x.Products).ToList());
+
+        Field<CategoryGraphType>("CategoryById")
+            .Description("Returns category by id")
+            .Argument<IntGraphType>("id")
+            .ResolveAsync(async context =>
+            {
+                var categoryId = context.GetArgument<int>("id");
+                var category = await _context.Categories.FindAsync(categoryId);
+                return category;
+            });
+    }
+}
+```
+> Here we create one "endpoint" that returns list of category and return one category by ID
+
+4. We create only one class for write(mutations) operations - `AppMutation`
+```
+public class AppMutation : ObjectGraphType
+{
+    public AppMutation(AppDbContext dbContext)
+    {
+        Field<ProductReadGraphType>("AddProduct")
+            .Argument<NonNullGraphType<ProductCreateGraphType>>("product")
+            .ResolveAsync(async context =>
+            {
+                var product = context.GetArgument<Product>("product");
+                var productEntity = dbContext.Products.Add(product);
+                await dbContext.SaveChangesAsync();
+                return productEntity.Entity;
+            });
+
+        Field<ProductReadGraphType>("UpdateProduct")
+            .Argument<NonNullGraphType<ProductUpdateGraphType>>("product")
+            .ResolveAsync(async context =>
+            {
+                var product = context.GetArgument<Product>("product");
+                var updateProduct = dbContext.Products.Update(product);
+                await dbContext.SaveChangesAsync();
+                return updateProduct.Entity;
+            });
+
+        Field<ProductReadGraphType>("DeleteProduct")
+            .Argument<IntGraphType>("id")
+            .ResolveAsync(async context =>
+            {
+                var id = context.GetArgument<int>("id");
+                var product = await dbContext.Products.FindAsync(id);
+                if (product is not null)
+                {
+                    var deleteProduct = dbContext.Products.Remove(product);
+                }
+                else
+                {
+                    throw new ArgumentNullException(nameof(product));
+                }
+                await dbContext.SaveChangesAsync();
+                return product;
+            });
+    }
+}
+```
+
+6. `AppSchema` for registering `AppQuery` and `AppMutation`
+```
+public class AppSchema : Schema
+{
+    public AppSchema(IServiceProvider serviceProvider)
+        :base(serviceProvider)
+    {
+        Query = serviceProvider.GetRequiredService<AppQuery>();
+        Mutation = serviceProvider.GetRequiredService<AppMutation>();
+    }
+}
+```
+
+7. In `Program` we register types like this:
+```
+using GraphQL;
+
+namespace GraphQL_Demonstration
+{
+    public class Program
+    {
+        private const string InMemoryDbConnectionStringName = "InMemory";
+
+        public static void Main(string[] args)
+        {
+            var builder = WebApplication.CreateBuilder(args);
+
+            ...
+
+            builder.Services.AddTransient<AppQuery>();
+            builder.Services.AddTransient<AppMutation>();
+            builder.Services.AddTransient<AppSchema>();
+            builder.Services.AddGraphQL(x => x.AddGraphTypes()
+                .AddGraphTypes(typeof(AppSchema).Assembly)
+                .AddSystemTextJson()
+                .AddErrorInfoProvider(opt =>
+                {
+                    opt.ExposeExceptionDetails = true;
+                }));
+
+            var app = builder.Build();
+
+            ...
+
+            app.UseGraphQL<AppSchema>();
+
+            // This line adds GraphQl UI client for testing
+            app.UseGraphQLGraphiQL(options: new GraphQL.Server.Ui.GraphiQL.GraphiQLOptions());
+
+            ...
+        }
+    }
+}
+```

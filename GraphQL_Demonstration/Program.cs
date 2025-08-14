@@ -2,9 +2,6 @@ using Bogus;
 using GraphQL_Demonstration.Data;
 using GraphQL_Demonstration.Model;
 using GraphQL;
-using GraphQL.Types;
-using GraphQL_Demonstration;
-using GraphQL_Demonstration.Model;
 using Microsoft.EntityFrameworkCore;
 
 namespace GraphQL_Demonstration
